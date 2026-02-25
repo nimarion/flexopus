@@ -58,15 +58,19 @@ class FlexopusClient:
 
         return body
 
-    
     def getLocations(self):
         return self._request("GET", "v2/locations")
     
     def getLocationsBookableStats(self):
         return self._request("GET", f"v2/locations/bookable-stats")
     
-    def getLocationBookables(self, id: int):
-        return self._request("GET", "v2/location/{id}/bookables")
+    def getLocationBookables(self, id: int, from_time: datetime, to_time: datetime):
+        params = {
+            "from": from_time.isoformat(),
+            "to": to_time.isoformat(),
+            "include_past": "true"
+        }
+        return self._request("GET", f"v2/location/{id}/bookables", params=params)
     
     def getLocationMap(self, id: int):
         return self._request("GET", f"locations/{id}/map")
