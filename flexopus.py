@@ -1,6 +1,7 @@
 import requests
 from typing import Optional, Dict, Any
 from datetime import datetime
+from urllib.parse import unquote
 
 class FlexopusClient:
     def __init__(self, base_host: str, api_token: str, timeout: int = 30):
@@ -23,7 +24,7 @@ class FlexopusClient:
         xsrf_token = self.session.cookies.get("XSRF-TOKEN")
         if xsrf_token:
             self.session.headers.update({
-                "X-XSRF-TOKEN": xsrf_token
+                "X-XSRF-TOKEN": unquote(xsrf_token)
             })
 
     def _request(
@@ -82,9 +83,16 @@ class FlexopusClient:
     def getBookableTypeImages(self):
         return self._request("GET", "bookable-type-images")
     
-    # TODO: 422: Typ muss ausgefüllt werden
+    # TODO: HTTP 422: Typ muss ausgefüllt werden
     def getFavourites(self):
+        raise NotImplementedError()
         return self._request("GET", "favourites")
+    
+    def addFavourite(self):
+        raise NotImplementedError()
+    
+    def deleteFavourite(self):
+        raise NotImplementedError()
     
     def getSelfUser(self):
         return self._request("GET", "auth/user")
@@ -126,6 +134,14 @@ class FlexopusClient:
     def getBooking(self, id: int):
         return self._request("GET", f"bookings/{id}")
     
+    def getBookingConflicts(self, from_time: datetime, to_time: datetime, bookable_type: str):
+        params = {
+            "from": from_time.isoformat(),
+            "to": to_time.isoformat(),
+            "bookable_type": bookable_type
+        }
+        return self._request("GET", "bookings/conflicts", params=params)
+    
     def deleteBooking(self, id: int):
         return self._request("DELETE", f"bookings/{id}")
 
@@ -136,11 +152,26 @@ class FlexopusClient:
         }
         return self._request("PATCH", f"bookings/{id}", json=payload)
     
+    def createBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime):
+        payload = {
+            "from_time": from_time.isoformat(),
+            "to_time": to_time.isoformat(),
+            "skip_weekends": False
+        }
+        return self._request("POST", f"location/{location_id}/bookables/{bookable_id}/book", json=payload)
+    
     def getSettings(self):
         return self._request("GET", "settings")
 
     def getBookable(self, id: int):
         return self._request("GET", f"bookables/{id}")
+    
+    def getBookableConflicts(self, bookable_id: int, from_time: datetime, to_time: datetime):
+        params = {
+            "from": from_time.isoformat(),
+            "to": to_time.isoformat(),
+        }
+        return self._request("GET", f"bookables/{bookable_id}/conflicts", params=params)
 
     def getCompanySettings(self):
         return self._request("GET", "company-settings")
