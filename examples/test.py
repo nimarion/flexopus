@@ -43,8 +43,8 @@ if __name__ == "__main__":
 
     if argparser.parse_args().bookables:
         bookables = client.getLocationBookables(argparser.parse_args().bookables, 
-                                                start_of_week,
-                                                end_of_week)["data"]
+                                                datetime.now(tz),
+                                                datetime.now(tz) + timedelta(days=1))["data"]
         for bookable in bookables:
             actual_bookings = bookable.get("actual_bookings", [])
             print(f"{bookable['id']}: {bookable['name']} ({bookable['type']}) ({bookable['status']}), {len(actual_bookings)} bookings)")
