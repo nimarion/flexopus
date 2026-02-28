@@ -1,6 +1,6 @@
 # flexopus
 
-> Before doing a non get request to the api you have to do a get request which sets the csrf token cookie and header. Otherwise you will get an error from the server when issuing a non get request.
+An python client for the flexopus api which uses the internal api of the flexopus web application to interact with the flexopus backend. The client is designed to be used in a python application and provides a simple interface to interact with the flexopus api.
 
 ## Terminology
 
@@ -14,9 +14,29 @@
 
 - [Examples](examples/)
 
+```bash
+# requirements.txt
+flexopus @ git+https://github.com/nimarion/flexopus
+```
+
+```bash
+pip install -r requirements.txt
+```
+
 ```python
-from flexopus import FlexopusClient
 import os
+from flexopus import FlexopusClient
 
 client = FlexopusClient(os.environ["FLEXOPUS_HOST"], os.environ["FLEXOPUS_TOKEN"])
 ```
+
+## Authentication & XSRF Token
+
+> Before doing a non get request to the api you have to do a get request which sets the csrf token cookie and header. Otherwise you will get an error from the server when issuing a non get request.
+
+The api server returns a fresh session token and a csrf token in the cookies on every request. The session token is used for authentication and the csrf token is used to prevent cross-site request forgery attacks. During runtime the client will automatically update the session token and csrf token on every request. If you want to persist the session token and csrf token across multiple runs of your application, you can save them to disk and load them on startup using the `getLatestSessionToken` and `getXsrfToken` methods of the  `Flexopus` class.
+
+<p align="center">
+  <img alt="Haha yes " width="250px" src="https://i.imgur.com/5bXJeZt.png">
+  <br>
+</p>

@@ -4,8 +4,14 @@ from datetime import datetime
 from urllib.parse import unquote
 
 class FlexopusClient:
+
+    _base_url: str
+    _timeout: int
+    session: requests.Session
+
     def __init__(self, base_host: str, api_token: str, timeout: int = 30):
-        self.base_url = f"https://{base_host}/internal-api"
+        self._base_url = f"https://{base_host}/internal-api"
+        self._timeout = timeout
         self.session = requests.Session()
         self.session.headers.update({
             "Accept": "application/json, image/svg+xml, */*",
@@ -36,7 +42,7 @@ class FlexopusClient:
     ) -> Dict[str, Any]:
         self._sync_csrf_header()
         
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        url = f"{self._base_url}/{endpoint.lstrip('/')}"
 
         response = self.session.request(
             method=method,
@@ -180,3 +186,8 @@ class FlexopusClient:
     def getCompanySettings(self):
         return self._request("GET", "company-settings")
     
+    def getLatestSessionToken(self):
+        return self.session.cookies.get("flexopus_session")
+
+    def getXsrfToken(self):
+        return self.session.cookies.get("XSRF-TOKEN")
