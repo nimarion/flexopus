@@ -5,23 +5,32 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from urllib.parse import unquote
 from http.cookiejar import CookieJar
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 def loadCookies(session: requests.Session, cookie_file: str):
     if not os.path.exists(cookie_file):
         with open(cookie_file, "wb") as f:
+            logger.debug("Cookie file not found. Creating new cookie file at %s", cookie_file)
             pickle.dump(requests.cookies.RequestsCookieJar(), f)
 
     with open(cookie_file, "rb") as f:
+        logger.debug("Loading cookies from file %s", cookie_file)
         cookies = pickle.load(f)
 
     if isinstance(cookies, CookieJar):
         session.cookies = cookies
+        logger.debug("Cookies loaded successfully from %s", cookie_file)
     else:
+        logger.warning("Loaded cookies are not of type CookieJar. Initializing empty cookie jar.")
         session.cookies = requests.cookies.RequestsCookieJar()
 
 def saveCookies(session: requests.Session, cookie_file: str):
     with open(cookie_file, "wb") as f:
         pickle.dump(session.cookies, f)
+        logger.debug("Cookies saved to file %s", cookie_file)
 
 class FlexopusClient:
 
@@ -54,6 +63,7 @@ class FlexopusClient:
                 domain=base_host
             )
         self.timeout = timeout
+        logger.debug("Client initialized for host=%s", base_host)
 
     def _sync_csrf_header(self):
         """If XSRF-TOKEN cookie exists, send it as header."""
@@ -153,7 +163,7 @@ class FlexopusClient:
         return self._request("GET", f"users/{id}")
     
     def getUserBookings(self, id: int, params: Optional[Dict[str, any]] = None):
-        return self._request("GET", f"bookings/user/{id}", params=params)["a"]
+        return self._request("GET", f"bookings/user/{id}", params=params)
     
     """
     Required parameters
