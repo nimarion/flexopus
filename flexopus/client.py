@@ -1,28 +1,58 @@
 import requests
+import pickle
+import os
 from typing import Optional, Dict, Any
 from datetime import datetime
 from urllib.parse import unquote
+from http.cookiejar import CookieJar
+
+def loadCookies(session: requests.Session, cookie_file: str):
+    if not os.path.exists(cookie_file):
+        with open(cookie_file, "wb") as f:
+            pickle.dump(requests.cookies.RequestsCookieJar(), f)
+
+    with open(cookie_file, "rb") as f:
+        cookies = pickle.load(f)
+
+    if isinstance(cookies, CookieJar):
+        session.cookies = cookies
+    else:
+        session.cookies = requests.cookies.RequestsCookieJar()
+
+def saveCookies(session: requests.Session, cookie_file: str):
+    with open(cookie_file, "wb") as f:
+        pickle.dump(session.cookies, f)
 
 class FlexopusClient:
 
     _base_url: str
     _timeout: int
     session: requests.Session
+    _cookie_file: Optional[str]
 
-    def __init__(self, base_host: str, api_token: str, timeout: int = 30):
+    def __init__(self, 
+                 base_host: str, 
+                 api_token: str,
+                 timeout: int = 30, 
+                 cookie_file: Optional[str] = None):
         self._base_url = f"https://{base_host}/internal-api"
         self._timeout = timeout
         self.session = requests.Session()
+        self._cookie_file = cookie_file
         self.session.headers.update({
             "Accept": "application/json, image/svg+xml, */*",
             "Origin": f"https://{base_host}",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:148.0) Gecko/20100101 Firefox/148.0"
         })
-        self.session.cookies.set(
-            "flexopus_session",
-            api_token,
-            domain=base_host
-        )
+        if cookie_file:
+            loadCookies(self.session, cookie_file)
+            
+        if self.session.cookies.get("flexopus_session") is None and api_token is not None:
+            self.session.cookies.set(
+                "flexopus_session",
+                api_token,
+                domain=base_host
+            )
         self.timeout = timeout
 
     def _sync_csrf_header(self):
@@ -53,6 +83,9 @@ class FlexopusClient:
         )
 
         response.raise_for_status()
+
+        if self._cookie_file:
+            saveCookies(self.session, self._cookie_file)
 
         content_type = response.headers.get("Content-Type", "").lower()
         if "image/svg+xml" in content_type:
@@ -120,7 +153,7 @@ class FlexopusClient:
         return self._request("GET", f"users/{id}")
     
     def getUserBookings(self, id: int, params: Optional[Dict[str, any]] = None):
-        return self._request("GET", f"bookings/user/{id}", params=params)
+        return self._request("GET", f"bookings/user/{id}", params=params)["a"]
     
     """
     Required parameters
