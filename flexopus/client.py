@@ -162,11 +162,12 @@ class FlexopusClient:
         }
         return self._request("PATCH", f"bookings/{id}", json=payload)
     
-    def createBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime):
+    def createBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime, user_vehicle_id: Optional[int] = None):
         payload = {
             "from_time": from_time.isoformat(),
             "to_time": to_time.isoformat(),
-            "skip_weekends": False
+            "skip_weekends": False,
+            "user_vehicle_id": user_vehicle_id
         }
         return self._request("POST", f"location/{location_id}/bookables/{bookable_id}/book", json=payload)
     
