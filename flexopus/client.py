@@ -213,6 +213,17 @@ class FlexopusClient:
             "user_vehicle_id": user_vehicle_id
         }
         return self._request("POST", f"location/{location_id}/bookables/{bookable_id}/book", json=payload)
+
+    def createGuestBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime, guest_email: str, guest_name: str, booking_info: Optional[str] = ""):
+        payload = {
+            "from_time": from_time.isoformat(),
+            "to_time": to_time.isoformat(),
+            "skip_weekends": False,
+            "guest_email": guest_email,
+            "guest_name": guest_name,
+            "booking_info": booking_info 
+        }
+        return self._request("POST", f"location/{location_id}/bookables/{bookable_id}/guest-booking", json=payload)
     
     def getSettings(self):
         return self._request("GET", "settings")
@@ -229,6 +240,9 @@ class FlexopusClient:
 
     def getCompanySettings(self):
         return self._request("GET", "company-settings")
+    
+    def authCheck(self):
+        return self._request("GET", "auth/check")
     
     def getLatestSessionToken(self):
         return self.session.cookies.get("flexopus_session")
