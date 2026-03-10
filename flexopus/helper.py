@@ -15,12 +15,17 @@ def getParkingLocation(client: FlexopusClient, building_id: int):
                 return location
     return None
 
-def getRandomParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime):
+def getFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime):
+    return getPreferedFreeParkingSpace(client, building_id, from_time, to_time, [])
+
+def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime, prefered_parking_spaces: list[str]):
     parking_location = getParkingLocation(client, building_id)
     parking_spaces = client.getLocationBookables(parking_location["id"], from_time, to_time)["data"]
-    for space in parking_spaces:
-        if space["type"] != "PARKING_SPACE":
-            continue
-        if space["status"] == "FREE" and len(space["actual_bookings"]) == 0:
-            return space
-    return None
+    free_spaces = [space for space in parking_spaces if space["type"] == "PARKING_SPACE" and space["status"] == "FREE" and len(space["actual_bookings"]) == 0]
+    
+    if len(prefered_parking_spaces) > 0:
+        prefered_free_spaces = [space for space in free_spaces if space["name"] in prefered_parking_spaces]
+        if len(prefered_free_spaces) > 0:
+            return prefered_free_spaces[0]
+
+    return free_spaces[0] if len(free_spaces) > 0 else None

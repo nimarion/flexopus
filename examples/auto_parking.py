@@ -81,12 +81,13 @@ def has_parking_for_desk(desk, parking_bookings):
     return False
 
 
-def book_parking(client, desk, vehicle_id):
-    free_space = helper.getRandomParkingSpace(
+def book_parking(client, desk, vehicle_id, prefered_parking_spaces: list[str] = []):
+    free_space = helper.getPreferedFreeParkingSpace(
         client,
         desk["building_id"],
         desk["from_time"],
         desk["to_time"],
+        prefered_parking_spaces,
     )
 
     if not free_space:
@@ -117,7 +118,7 @@ def book_parking(client, desk, vehicle_id):
         )
 
 
-def process_desk_bookings(client, desk_bookings, parking_bookings, vehicle_id):
+def process_desk_bookings(client, desk_bookings, parking_bookings, vehicle_id, prefered_parking_spaces: list[str] = []):
     for desk in desk_bookings:
         print(
             f"Booking ID: {desk['id']}, "
@@ -130,7 +131,7 @@ def process_desk_bookings(client, desk_bookings, parking_bookings, vehicle_id):
         if has_parking_for_desk(desk, parking_bookings):
             print("-> Parking already booked for this desk booking.")
         else:
-            book_parking(client, desk, vehicle_id)
+            book_parking(client, desk, vehicle_id, prefered_parking_spaces)
 
         print("")
 
@@ -153,6 +154,14 @@ if __name__ == "__main__":
         type=str, 
         default=os.environ.get("FLEXOPUS_COOKIE_FILE"),
         help="The file to store cookies for authentication.")
+
+    parser.add_argument(
+        "--prefered-parking-spaces",
+        type=str,
+        nargs="*",
+        default=[],
+        help="A list of prefered parking space names to book. If any of the prefered parking spaces are free, they will be booked instead of a random free parking space."
+    )
     args = parser.parse_args()
 
     client = FlexopusClient(args.host, args.token, cookie_file=args.cookie_file)
@@ -164,4 +173,5 @@ if __name__ == "__main__":
         desk_bookings,
         parking_bookings,
         vehicle["id"],
+        args.prefered_parking_spaces
     )
