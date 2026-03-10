@@ -37,6 +37,29 @@ client = FlexopusClient(os.environ["FLEXOPUS_HOST"], os.environ["FLEXOPUS_TOKEN"
 
 The api server returns a fresh session token and a csrf token in the cookies on every request. The session token is used for authentication and the csrf token is used to prevent cross-site request forgery attacks. During runtime the client will automatically update the session token and csrf token on every request. If you want to persist the session token and csrf token across multiple runs of your application, you can save them to disk and load them on startup using the `getLatestSessionToken` and `getXsrfToken` methods of the  `Flexopus` class.
 
+# API Response Format
+
+Most of the api endpoints return a response in the following format:
+
+```json
+{
+  "data": {}, // The actual data returned by the api
+  "links": {}, // pagination links, such as next, previous, first, last, etc.
+  "meta" {} // metadata, such as pagination information, total count, etc.
+}
+```
+
+locations/{id}/map returns a svg map of the location which is used in the web application to display the location map. The svg contains the layout of the location and the bookables associated with it.
+
+```svg
+<g id="bookables">
+      <g id="DESK">
+        <g id="TABLE_08">
+          <path id="Vector_439" opacity="0.8" d="M873.929 164.09H857.972V208.09H873.929V164.09Z" fill="white"></path>
+          <path id="Vector_440" opacity="0.8" d="M875.425 191.546C876.896 191.546 878.307 190.96 879.347 189.917C880.388 188.874 880.972 187.459 880.972 185.984C880.972 184.509 880.388 183.094 879.347 182.051C878.307 181.008 876.896 180.422 875.425 180.422V191.546Z" fill="white"></path>
+        </g>
+```
+
 <p align="center">
   <img alt="Haha yes " width="250px" src="https://i.imgur.com/5bXJeZt.png">
   <br>
