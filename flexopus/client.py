@@ -2,13 +2,21 @@ import requests
 import pickle
 import os
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import unquote
 from http.cookiejar import CookieJar
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+def transformNowDatetime(dtime: datetime) -> datetime:
+    now = datetime.now(timezone.utc)
+
+    if dtime.tzinfo is None:
+        dtime = dtime.replace(tzinfo=timezone.utc)
+
+    return max(dtime, now)
 
 def loadCookies(session: requests.Session, cookie_file: str):
     if not os.path.exists(cookie_file):
@@ -200,14 +208,14 @@ class FlexopusClient:
 
     def updateBooking(self, id: int, from_time: datetime, to_time: datetime):
         payload = {
-            "fromTime": from_time.isoformat(),
+            "fromTime": transformNowDatetime(from_time).isoformat(),
             "toTime": to_time.isoformat()
         }
         return self._request("PATCH", f"bookings/{id}", json=payload)
     
     def createBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime, user_vehicle_id: Optional[int] = None):
         payload = {
-            "from_time": from_time.isoformat(),
+            "from_time": transformNowDatetime(from_time).isoformat(),
             "to_time": to_time.isoformat(),
             "skip_weekends": False,
             "user_vehicle_id": user_vehicle_id
@@ -216,7 +224,7 @@ class FlexopusClient:
 
     def createGuestBooking(self, location_id: int, bookable_id: int,  from_time: datetime, to_time: datetime, guest_email: str, guest_name: str, booking_info: Optional[str] = ""):
         payload = {
-            "from_time": from_time.isoformat(),
+            "from_time": transformNowDatetime(from_time).isoformat(),
             "to_time": to_time.isoformat(),
             "skip_weekends": False,
             "guest_email": guest_email,
