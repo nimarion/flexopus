@@ -2,3 +2,6 @@
 name = "flexopus"
 version = "0.1.0"
 dependencies = ["requests"]
+
+[tool.setuptools.packages.find]
+include = ["flexopus*"]
