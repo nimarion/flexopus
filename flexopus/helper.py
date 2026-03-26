@@ -20,6 +20,8 @@ def getFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: dat
 
 def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime, prefered_parking_spaces: list[str]):
     parking_location = getParkingLocation(client, building_id)
+    if parking_location is None:
+        return None
     parking_spaces = client.getLocationBookables(parking_location["id"], from_time, to_time)["data"]
     free_spaces = [space for space in parking_spaces if space["type"] == "PARKING_SPACE" and space["status"] == "FREE" and len(space["actual_bookings"]) == 0]
     
