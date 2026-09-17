@@ -19,15 +19,26 @@ def getFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: dat
     return getPreferedFreeParkingSpace(client, building_id, from_time, to_time, [])
 
 def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime, prefered_parking_spaces: list[str]):
-    parking_location = getParkingLocation(client, building_id)
-    if parking_location is None:
-        return None
-    parking_spaces = client.getLocationBookables(parking_location["id"], from_time, to_time)["data"]
-    free_spaces = [space for space in parking_spaces if space["type"] == "PARKING_SPACE" and space["status"] == "FREE" and len(space["actual_bookings"]) == 0]
+    locations = client.getLocations()["data"]
+    building_locations = [loc for loc in locations if loc["building_id"] == building_id]
     
+    free_spaces = []
+    for loc in building_locations:
+        try:
+            parking_spaces = client.getLocationBookables(loc["id"], from_time, to_time)["data"]
+            loc_free_spaces = [space for space in parking_spaces if space["type"] == "PARKING_SPACE" and space["status"] == "FREE" and len(space["actual_bookings"]) == 0]
+            free_spaces.extend(loc_free_spaces)
+        except Exception:
+            pass
+            
+    if not free_spaces:
+        return None
+        
     if len(prefered_parking_spaces) > 0:
-        prefered_free_spaces = [space for space in free_spaces if space["name"] in prefered_parking_spaces]
-        if len(prefered_free_spaces) > 0:
-            return prefered_free_spaces[0]
-
-    return free_spaces[0] if len(free_spaces) > 0 else None
+        for pref_name in prefered_parking_spaces:
+            clean_pref = pref_name.strip().lower()
+            for space in free_spaces:
+                if space["name"].strip().lower() == clean_pref:
+                    return space
+                    
+    return free_spaces[0]
