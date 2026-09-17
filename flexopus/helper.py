@@ -18,7 +18,10 @@ def getParkingLocation(client: FlexopusClient, building_id: int):
 def getFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime):
     return getPreferedFreeParkingSpace(client, building_id, from_time, to_time, [])
 
-def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime, prefered_parking_spaces: list[str]):
+def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_time: datetime, to_time: datetime, prefered_parking_spaces: list[str], excluded_space_ids=None):
+    if excluded_space_ids is None:
+        excluded_space_ids = set()
+        
     locations = client.getLocations()["data"]
     building_locations = [loc for loc in locations if loc["building_id"] == building_id]
     
@@ -26,7 +29,13 @@ def getPreferedFreeParkingSpace(client: FlexopusClient, building_id: int, from_t
     for loc in building_locations:
         try:
             parking_spaces = client.getLocationBookables(loc["id"], from_time, to_time)["data"]
-            loc_free_spaces = [space for space in parking_spaces if space["type"] == "PARKING_SPACE" and space["status"] == "FREE" and len(space["actual_bookings"]) == 0]
+            loc_free_spaces = [
+                space for space in parking_spaces 
+                if space["type"] == "PARKING_SPACE" 
+                and space["status"] == "FREE" 
+                and len(space["actual_bookings"]) == 0
+                and space["id"] not in excluded_space_ids
+            ]
             free_spaces.extend(loc_free_spaces)
         except Exception:
             pass
